@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:rabbit="http://www.springframework.org/schema/rabbit"
+	xsi:schemaLocation="
+	http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans.xsd
+	http://www.springframework.org/schema/context
+	http://www.springframework.org/schema/context/spring-context.xsd
+	http://www.springframework.org/schema/tx
+	http://www.springframework.org/schema/tx/spring-tx.xsd
+	http://www.springframework.org/schema/aop
+	http://www.springframework.org/schema/aop/spring-aop.xsd
+	http://www.springframework.org/schema/mvc
+    http://www.springframework.org/schema/mvc/spring-mvc-4.3.xsd 
+    http://www.springframework.org/schema/rabbit
+    http://www.springframework.org/schema/rabbit/spring-rabbit-1.7.xsd">
+
+	<rabbit:connection-factory id="rabbitConnectionFactory"
+		host="${rabbit.hosts}" username="${rabbit.username}" password="${rabbit.password}"
+		virtual-host="${rabbit.virtualHost}" port="${rabbit.port}" channel-cache-size="5"/>
+		
+	<rabbit:admin connection-factory="rabbitConnectionFactory" id="rabbitAdmin"/>
+	
+	<rabbit:queue id="hibernate_queue" name="hibernate_queue" durable="false" exclusive="false" 
+			auto-delete="true" declared-by="rabbitAdmin"/>
+	
+	<rabbit:direct-exchange name="hibernate_exchange" declared-by="rabbitAdmin" auto-delete="true" durable="false" >
+		<rabbit:bindings>
+			<rabbit:binding queue="hibernate_queue" key="hibernate_bindingkey_one"/>
+		</rabbit:bindings>
+	</rabbit:direct-exchange>
+	
+	<rabbit:template exchange="hibernate_exchange" id="rabbitTemplate" connection-factory="rabbitConnectionFactory" />
+
+	<bean id="myListenter" class="org.springframework.amqp.rabbit.listener.adapter.MessageListenerAdapter">
+		<property name="delegate">
+			<bean class="com.cxp.config.rabbitmq.RabbitmqMessageListenter"></bean>
+		</property>
+		<property name="defaultListenerMethod" value="handleMessage"></property>
+	</bean>
+	
+	<bean id="listenerContainer" class="org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer">
+		<property name="acknowledgeMode" value="AUTO"></property>
+		<property name="connectionFactory" ref="rabbitConnectionFactory"></property>
+		<property name="messageListener" ref="myListenter"></property>
+		<property name="queues" ref="hibernate_queue"></property>
+		<property name="prefetchCount" value="2"></property>
+	</bean>
+</beans>

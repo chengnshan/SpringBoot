@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="
+	http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans.xsd
+	http://www.springframework.org/schema/context
+	http://www.springframework.org/schema/context/spring-context.xsd
+	http://www.springframework.org/schema/tx
+	http://www.springframework.org/schema/tx/spring-tx.xsd
+	http://www.springframework.org/schema/aop
+	http://www.springframework.org/schema/aop/spring-aop.xsd
+	http://www.springframework.org/schema/mvc
+    http://www.springframework.org/schema/mvc/spring-mvc-4.3.xsd ">
+
+	<context:component-scan base-package="com.cxp.controller" />
+	
+	<mvc:default-servlet-handler/>
+
+	<mvc:annotation-driven>
+		<mvc:message-converters>
+			<bean class="org.springframework.http.converter.StringHttpMessageConverter">
+				<property name="supportedMediaTypes">
+					<list>
+						<value>text/html;charset=UTF-8</value>
+						<value>text/plain;charset=UTF-8</value>
+					</list>
+				</property>
+			</bean>
+			<bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
+				<property name="supportedMediaTypes">
+					<list>
+						<value>application/json;charset=UTF-8</value>
+					</list>
+				</property>
+			</bean>
+		</mvc:message-converters>
+	</mvc:annotation-driven>
+
+	<bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="viewClass"
+			value="org.springframework.web.servlet.view.JstlView" />
+		<property name="prefix" value="/WEB-INF/jsp/" />
+		<property name="suffix" value=".jsp" />
+	</bean>
+
+	<!-- 配置国际化资源文件 -->
+	<bean id="messageSource"
+        class="org.springframework.context.support.ResourceBundleMessageSource">
+        <!-- 其中basename用来指定properties文件的通用名 
+        	如实例中的i18n_en_US.properties,i18n_zh_CN.properties通用名都是i18n -->
+        <property name="basename" value="i18n/i18n"></property>
+    </bean>
+	
+	<mvc:view-controller path="i18n/i18n_1" view-name="i18n/i18n_1"/>
+	<mvc:view-controller path="i18n/i18n_2" view-name="i18n/i18n_2"/>
+	
+	<!-- 配置 SessionLocalResolver
+     作用：将Locale对象设置为session的属性；从session中获取Locale对象 -->
+    <bean id="localeResolver"
+        class="org.springframework.web.servlet.i18n.SessionLocaleResolver"></bean>
+        
+    <mvc:interceptors>
+        <!-- 配置 LocaleChanceInterceptor 拦截器 ,作用： 获取name=locale的请求参数 -->
+        <bean class="org.springframework.web.servlet.i18n.LocaleChangeInterceptor"></bean>
+	</mvc:interceptors>
+	
+	<!-- 控制器返回helloView字符串后，不会立马就显示视图的，
+	需要经过BeanNameViewResolver视图解析器直接从IOC容器中把helloView视图获取出来，
+	所以前面需要在HelloView的视图类上加注解@Component,把视图先放在IOC容器中，否则视图解析器找不到。
+    order定义了视图解析器的级别，就是执行先后顺序，因为一个工程中可能有多个视图解析器,order的值越小优先级越低	-->
+	<bean class="org.springframework.web.servlet.view.BeanNameViewResolver">
+		<property name="order" value="100"></property>
+	</bean>
+	
+	<bean id="helloView" class="com.cxp.view.HelloView"></bean>
+	
+	<bean id="excel" class="com.cxp.view.ViewExcel"></bean>
+	
+	<bean id="pdf" class="com.cxp.view.ViewPDF"></bean>
+		
+</beans>
+
+

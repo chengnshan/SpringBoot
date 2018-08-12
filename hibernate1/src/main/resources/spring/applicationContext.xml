@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop" xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="
+	http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans.xsd
+	http://www.springframework.org/schema/context
+	http://www.springframework.org/schema/context/spring-context.xsd
+	http://www.springframework.org/schema/tx
+	http://www.springframework.org/schema/tx/spring-tx.xsd
+	http://www.springframework.org/schema/aop
+	http://www.springframework.org/schema/aop/spring-aop.xsd
+	http://www.springframework.org/schema/mvc
+    http://www.springframework.org/schema/mvc/spring-mvc-4.3.xsd ">
+
+	<context:property-placeholder location="classpath:jdbc.properties"/>
+	
+	<context:component-scan base-package="com.cxp.dao"></context:component-scan>
+	
+	<bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
+	   <property name="url" value="${mysql.url}"></property>
+	   <property name="driverClassName" value="${mysql.driver}"></property>
+	   <property name="username" value="${mysql.username}"></property>
+	   <property name="password" value="${mysql.password}"></property>
+	   <property name="maxActive" value="20"></property>
+	   <property name="minIdle" value="2"></property>
+	   <property name="maxIdle" value="20"></property>
+	    <!-- 配置获取连接等待超时的时间 -->
+	   <property name="maxWait" value="60000"></property>
+	    <!-- 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒 -->
+     <property name="timeBetweenEvictionRunsMillis" value="60000" />
+	</bean>
+	
+	<bean id="sessionFactory" class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+		<property name="dataSource" ref="dataSource"></property>
+		<property name="hibernateProperties">
+			<props>
+				<!--hibernate根据实体自动生成数据库表-->
+				<prop key="hibernate.hbm2ddl.auto">${hibernate.hbm2ddl.auto}</prop> 
+				<!--指定数据库方言-->
+                <prop key="hibernate.dialect">${hibernate.dialect}</prop>   
+                <!--在控制台显示执行的数据库操作语句-->
+                <prop key="hibernate.show_sql">${hibernate.show_sql}</prop>     
+                <!--在控制台显示执行的数据哭操作语句（格式）-->
+                <prop key="hibernate.format_sql">${hibernate.format_sql}</prop>  
+                <!-- 开启二级缓存 -->   
+                <prop key="hibernate.cache.use_second_level_cache">true</prop>
+                <prop key="hibernate.cache.region.factory_class">org.hibernate.cache.ehcache.EhCacheRegionFactory</prop>
+				<prop key="hibernate.cache.provider_configuration_file_resource_path">classpath:ehcache.xml</prop>
+			</props>
+		</property>
+		<property name="packagesToScan">
+			<list><value>com.cxp.pojo</value></list>
+		</property>
+		<property name="entityInterceptor" ref="entityInterceptor"></property>
+	</bean>
+	
+	<bean id="entityInterceptor" class="com.cxp.config.HibernateEntityInterceptor"></bean>
+	
+	<!-- 事物管理器配置  -->
+    <bean id="transactionManager" class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+        <property name="sessionFactory" ref="sessionFactory" />
+    </bean>
+	
+	<tx:annotation-driven transaction-manager="transactionManager"/>
+	
+	<import resource="applicationContext-rabbitmq.xml"/>
+</beans>
