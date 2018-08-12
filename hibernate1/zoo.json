@@ -1,0 +1,13 @@
+{
+  "name" : "SH Wild Park",
+  "city" : "ShangHai",
+  "animals" : [ {
+    "@class" : "com.test.pojo.abstra.Lion",
+    "name" : "Samba",
+    "price" : 12000.0
+  }, {
+    "@class" : "com.test.pojo.abstra.Elephant",
+    "name" : "Manny",
+    "age" : 29
+  } ]
+}
